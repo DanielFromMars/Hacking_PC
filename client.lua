@@ -2,6 +2,7 @@ local scaleform = nil
 local ClickReturn 
 local lives = 5 --In the original scaleform minigame which you can play online, there are 7 lives given to the player.
 local gamePassword = "HONGKONG" --It's possible to use a table and assign random passwords to the minigame.
+local ipdone = false -- check for HackConnect.exe
 
 Citizen.CreateThread(function()
     function Initialize(scaleform)
@@ -94,6 +95,22 @@ Citizen.CreateThread(function()
             PushScaleformMovieFunction(scaleform, "SET_INPUT_EVENT_BACK")
             PopScaleformMovieFunctionVoid()
             PlaySoundFrontend(-1, "HACKING_CLICK", "", true)
+		elseif IsDisabledControlJustPressed(0, 172) then -- I disabled these controls in my script, that's why they are IsDisabledControlJustPressed()
+            PushScaleformMovieFunction(scaleform, "SET_INPUT_EVENT")
+            PushScaleformMovieFunctionParameterInt(8) -- These are the direction paramters (I found them in the native scripts)
+            PlaySoundFrontend(-1, "HACKING_CLICK", "", true)
+        elseif IsDisabledControlJustPressed(0, 173) then
+	    	PushScaleformMovieFunction(scaleform, "SET_INPUT_EVENT")
+	    	PushScaleformMovieFunctionParameterInt(9)
+	    	PlaySoundFrontend(-1, "HACKING_CLICK", "", true)
+    	elseif IsDisabledControlJustPressed(0, 174) then
+	    	PushScaleformMovieFunction(scaleform, "SET_INPUT_EVENT")
+			PushScaleformMovieFunctionParameterInt(10)
+			PlaySoundFrontend(-1, "HACKING_CLICK", "", true)
+    	elseif IsDisabledControlJustPressed(0, 175) then
+			PushScaleformMovieFunction(scaleform, "SET_INPUT_EVENT")
+			PushScaleformMovieFunctionParameterInt(11)
+			PlaySoundFrontend(-1, "HACKING_CLICK", "", true)
         end
     end
 end)
@@ -105,14 +122,16 @@ Citizen.CreateThread(function()
             FreezeEntityPosition(PlayerPedId(), true) --If the user is in scaleform we should freeze him to prevent movement.
             DisableControlAction(0, 24, true) --LEFT CLICK disabled while in scaleform
             DisableControlAction(0, 25, true) --RIGHT CLICK disabled while in scaleform
+			-- You may want to also disable 🡡🡣🡢🡠 keys. Because we use them in IP Mini-Game
             if GetScaleformMovieFunctionReturnBool(ClickReturn) then -- old native?
                 ProgramID = GetScaleformMovieFunctionReturnInt(ClickReturn)
                 print("ProgramID: "..ProgramID) -- Prints the ID of the Apps we click on inside the scaleform, very useful.
 
                 if ProgramID == 82 then --HACKCONNECT.EXE
-                    PlaySoundFrontend(-1, "HACKING_CLICK_BAD", "", false)
-
-                elseif ProgramID == 83 then  --BRUTEFORCE.EXE
+                    PushScaleformMovieFunction(scaleform, "OPEN_APP")
+                    PushScaleformMovieFunctionParameterFloat(0.0)
+                    PopScaleformMovieFunctionVoid()
+                elseif ProgramID == 83 and ipdone then  --BRUTEFORCE.EXE (ipdone makes sure that you won't be able use BruteForce.exe without completing HackConnect.exe first.)
                     PushScaleformMovieFunction(scaleform, "RUN_PROGRAM")
                     PushScaleformMovieFunctionParameterFloat(83.0)
                     PopScaleformMovieFunctionVoid()
@@ -120,8 +139,17 @@ Citizen.CreateThread(function()
                     PushScaleformMovieFunction(scaleform, "SET_ROULETTE_WORD")
                     PushScaleformMovieFunctionParameterString(gamePassword)
                     PopScaleformMovieFunctionVoid()
+				elseif ProgramID == 84 then
+					PlaySoundFrontend(-1, "HACKING_SUCCESS", "", true)
+                    PushScaleformMovieFunction(scaleform, "SET_IP_OUTCOME")
+                    PushScaleformMovieFunctionParameterBool(true)
+                    ScaleformLabel(0x18EBB648)
+                    PopScaleformMovieFunctionVoid()
 
-                elseif ProgramID == 87 then --IF YOU CLICK THE WRONG LETTER IN BRUTEFORCE APP
+                    PushScaleformMovieFunction(scaleform, "CLOSE_APP")
+                    PopScaleformMovieFunctionVoid()
+					ipdone = true
+                elseif ProgramID == 87 then --IF YOU CLICK THE WRONG LETTER IN BRUTEFORCE APP (This should also work for IP game)
                     lives = lives - 1
 
                     PushScaleformMovieFunction(scaleform, "SET_ROULETTE_WORD")
@@ -203,7 +231,7 @@ Citizen.CreateThread(function()
                     DisableControlAction(0, 25, false) --RIGHT CLICK enabled again
                 end
 
-                if lives == 0 then
+                if lives == 0 then -- Also make sure to edit this, because we no longer have only one mini-game
                     PlaySoundFrontend(-1, "HACKING_FAILURE", "", true)
                     PushScaleformMovieFunction(scaleform, "SET_ROULETTE_OUTCOME")
                     PushScaleformMovieFunctionParameterBool(false)
